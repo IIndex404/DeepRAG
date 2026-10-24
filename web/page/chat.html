@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+
+    <!-- 告诉浏览器：这个网页里的文字按 UTF-8 来读，这样中文一般不会乱码。 -->
+    <meta charset="UTF-8">
+
+    <!-- 告诉浏览器：网页宽度跟着当前设备屏幕宽度走，手机打开时不会硬塞成电脑版宽度。 -->
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>掌柜智库</title>
+
+
+    <style>
+
+        /* ==================== 1.先给整个网页定几个最基础的规矩 ==================== */
+
+        * {
+            /* 算宽高时把 padding 和 border 也算进去，比如写 200px 最终总宽就是 200px，不会又被内边距撑大。 */
+            box-sizing: border-box;
+        }
+
+
+        body {
+
+            /* 浏览器默认四周会留一点白边，这里把那圈白边去掉。 */
+            margin: 0;
+
+            /* 整个网页最少也要有一整屏那么高。 */
+            min-height: 100vh;
+
+            /* 规定页面优先使用哪些字体，前面的没有就继续往后找。 */
+            font-family:
+                    "Microsoft YaHei",
+                    Arial,
+                    sans-serif;
+
+            /* 设置整个网页最外层的浅灰色背景。 */
+            background: #f3f5f7;
+
+            /* 设置整个网页默认的文字颜色。 */
+            color: #222;
+        }
+
+
+        /* ==================== 2.app 就是整个聊天软件的大外壳 ==================== */
+
+        .app {
+
+            /* 聊天窗口最多宽 1000px，屏幕再宽它也不会无限往两边撑。 */
+            max-width: 1000px;
+
+            /* 上下各留 30px，左右写 auto 就是让聊天框自动跑到页面正中间。 */
+            margin: 30px auto;
+
+            /* 整个浏览器高度是 100vh，上下已经留了 60px，所以这里减掉 60px。 */
+            height: calc(100vh - 60px);
+
+            /* 聊天框里面用白色背景。 */
+            background: white;
+
+            /* 把聊天框四个角磨圆一点。 */
+            border-radius: 16px;
+
+            /* 给聊天框加一点阴影，让它看起来像浮在页面上。 */
+            box-shadow:
+                    0 8px 30px
+                    rgba(0, 0, 0, 0.08);
+
+            /* flex 就是弹性布局，用来方便排列里面这些盒子。 */
+            display: flex;
+
+            /* column 表示里面的东西从上往下排，也就是标题栏→聊天区→输入区。 */
+            flex-direction: column;
+
+            /* 如果里面的东西跑出聊天框，就把超出去的部分藏掉。 */
+            overflow: hidden;
+        }
+
+
+        /* ==================== 3.最上面的标题栏 ==================== */
+
+        .top-bar {
+
+            /* 设置顶部标题栏高度。 */
+            height: 70px;
+
+            /* 上下不留空，左右各留 22px。 */
+            padding: 0 22px;
+
+            /* 用 flex 把左边标题和右边按钮横着排。 */
+            display: flex;
+
+            /* 让标题和按钮在上下方向居中。 */
+            align-items: center;
+
+            /* 在标题栏下面画一条淡淡的线，把标题区和聊天区分开。 */
+            border-bottom:
+                    1px solid #eeeeee;
+
+            /* 左边内容贴左，右边内容贴右，中间空间自动撑开。 */
+            justify-content: space-between;
+        }
+
+
+        .title {
+
+            /* 设置主标题文字大小。 */
+            font-size: 20px;
+
+            /* 让主标题变粗。 */
+            font-weight: bold;
+        }
+
+
+        .subtitle {
+
+            /* 让副标题和上面的主标题隔开一点。 */
+            margin-top: 5px;
+
+            /* 设置副标题文字大小。 */
+            font-size: 12px;
+
+            /* 副标题用灰色显示。 */
+            color: #888;
+        }
+
+
+        /* 清空聊天按钮的样式。 */
+        .clear-button {
+
+            /* 不要浏览器默认的按钮边框。 */
+            border: none;
+
+            /* 按钮背景用浅灰色。 */
+            background: #f1f3f5;
+
+            /* 按钮文字四周留一点空隙。 */
+            padding: 9px 14px;
+
+            /* 把按钮四个角磨圆。 */
+            border-radius: 8px;
+
+            /* 鼠标放上去时变成小手，提醒用户这里能点。 */
+            cursor: pointer;
+        }
+
+
+        .clear-button:hover {
+
+            /* 鼠标放到按钮上时，把按钮颜色稍微变深一点。 */
+            background: #e5e7eb;
+        }
+
+
+        /* ==================== 4.中间真正显示聊天消息的区域 ==================== */
+
+        .chat {
+
+            /* 顶部和底部占完以后，剩下所有空间都给聊天区。 */
+            flex: 1;
+
+            /* 聊天内容四周留 20px 空隙。 */
+            padding: 20px;
+
+            /* 消息太多时只在聊天区里面出现上下滚动条，不把整个网页一直撑长。 */
+            overflow-y: auto;
+        }
+
+
+        /* message 就是一整条聊天消息，不管是用户还是 AI 都先套这一层。 */
+        .message {
+
+            /* 用 flex 来摆这一整条消息。 */
+            display: flex;
+
+            /* 每条消息下面留 18px，防止一条挨一条太挤。 */
+            margin-bottom: 18px;
+        }
+
+
+        /* 用户发的消息靠右显示。 */
+        .message.user {
+
+            justify-content: flex-end;
+        }
+
+
+        /* AI 发的消息靠左显示。 */
+        .message.bot {
+
+            justify-content: flex-start;
+        }
+
+
+        /* bubble 就是聊天软件里真正装文字的消息气泡。 */
+        .bubble {
+
+            /* 一条消息最多占聊天区域 75% 的宽度，不让文字从最左边一直铺到最右边。 */
+            max-width: 75%;
+
+            /* 气泡里面文字四周留一点空隙，不要贴着边。 */
+            padding: 12px 15px;
+
+            /* 把气泡四个角磨圆。 */
+            border-radius: 12px;
+
+            /* 每一行文字之间稍微留点距离，看起来不挤。 */
+            line-height: 1.6;
+
+            /* 文字本来有换行的话，网页上也照着换行显示。 */
+            white-space: pre-wrap;
+
+            /* 如果碰到特别长的网址或文字，宁愿中间换行，也不要把聊天框撑出去。 */
+            word-break: break-word;
+        }
+
+
+        /* 用户自己的消息用蓝底白字。 */
+        .user .bubble {
+
+            background: #1677ff;
+
+            color: white;
+
+            /* 用户气泡右下角稍微尖一点，看起来更像聊天软件。 */
+            border-bottom-right-radius: 4px;
+        }
+
+
+        /* AI 的消息用浅灰色背景和深色文字。 */
+        .bot .bubble {
+
+            background: #f1f3f5;
+
+            color: #222;
+
+            /* AI 气泡左下角稍微尖一点。 */
+            border-bottom-left-radius: 4px;
+        }
+
+
+        /* ==================== 5.AI 回答里面如果有图片，就用下面这些样式 ==================== */
+
+        .answer-images {
+
+            /* 图片和上面的文字隔开一点。 */
+            margin-top: 12px;
+
+            /* 用 flex 来排图片。 */
+            display: flex;
+
+            /* 图片一张一张从上往下排。 */
+            flex-direction: column;
+
+            /* 每张图片之间隔 10px。 */
+            gap: 10px;
+        }
+
+
+        .answer-images img {
+
+            /* 图片最大不要超过 500px，防止一张图占满整个页面。 */
+            max-width: 500px;
+
+            /* 如果聊天框比较窄，图片也跟着缩小，不要横着撑出去。 */
+            width: 100%;
+
+            /* 把图片四个角磨圆。 */
+            border-radius: 10px;
+
+            /* 给图片外面画一圈很淡的边框。 */
+            border: 1px solid #dddddd;
+        }
+
+
+        /* ==================== 6.AI 还没回答时显示“正在思考...” ==================== */
+
+        .typing {
+
+            /* “正在思考...”用灰色显示。 */
+            color: #888;
+
+            /* 设置“正在思考...”的文字大小。 */
+            font-size: 14px;
+        }
+
+
+        /* ==================== 7.最下面输入问题和发送按钮的区域 ==================== */
+
+        .input-area {
+
+            /* 输入区四周留 15px 空隙。 */
+            padding: 15px;
+
+            /* 在输入区上面画一条淡线，把它和聊天内容区分开。 */
+            border-top:
+                    1px solid #eeeeee;
+
+            /* 输入框和发送按钮横着排。 */
+            display: flex;
+
+            /* 输入框和发送按钮之间隔 10px。 */
+            gap: 10px;
+        }
+
+
+        textarea {
+
+            /* 发送按钮占完固定宽度以后，剩下所有宽度都给输入框。 */
+            flex: 1;
+
+            /* 输入框最小高度 50px。 */
+            min-height: 50px;
+
+            /* 输入框最高 140px。 */
+            max-height: 140px;
+
+            /* 不允许用户用鼠标把输入框随便拖大拖小。 */
+            resize: none;
+
+            /* 输入框文字四周留 12px 空隙。 */
+            padding: 12px;
+
+            /* 给输入框画一圈浅灰色边框。 */
+            border:
+                    1px solid #dddddd;
+
+            /* 把输入框四个角磨圆。 */
+            border-radius: 10px;
+
+            /* 去掉浏览器自己默认的那圈选中边框，下面我们自己控制颜色。 */
+            outline: none;
+
+            /* 设置输入框文字大小。 */
+            font-size: 14px;
+
+            /* 输入框继续使用整个网页的字体。 */
+            font-family: inherit;
+        }
+
+
+        textarea:focus {
+
+            /* 用户点进输入框打字时，把边框变蓝，提醒现在正在这里输入。 */
+            border-color: #1677ff;
+        }
+
+
+        /* 发送按钮的样式。 */
+        .send-button {
+
+            /* 发送按钮固定宽 90px。 */
+            width: 90px;
+
+            /* 去掉浏览器默认按钮边框。 */
+            border: none;
+
+            /* 把发送按钮四个角磨圆。 */
+            border-radius: 10px;
+
+            /* 发送按钮使用蓝色背景。 */
+            background: #1677ff;
+
+            /* 按钮文字用白色。 */
+            color: white;
+
+            /* 鼠标放上去变成小手，表示可以点击。 */
+            cursor: pointer;
+
+            /* 设置按钮文字大小。 */
+            font-size: 14px;
+        }
+
+
+        .send-button:hover {
+
+            /* 鼠标放到发送按钮上时，让蓝色稍微变深一点。 */
+            background: #0958d9;
+        }
+
+
+        /* 后端还在回答时会临时锁住发送按钮，防止用户连续疯狂点击。 */
+        .send-button:disabled {
+
+            /* 被锁住后让按钮颜色变淡。 */
+            opacity: 0.5;
+
+            /* 被锁住时鼠标也不再显示成可以点击的小手。 */
+            cursor: not-allowed;
+        }
+
+
+        /* ==================== 8.右上角“流式输出”勾选框 ==================== */
+
+        .stream-box {
+
+            /* 设置流式输出文字大小。 */
+            font-size: 13px;
+
+            /* 流式输出文字用灰色。 */
+            color: #666;
+
+            /* 和右边清空按钮隔开一点。 */
+            margin-right: 15px;
+        }
+
+
+        .top-right {
+
+            /* 把“流式输出”和“清空对话”横着排在一起。 */
+            display: flex;
+
+            /* 让右上角这些东西上下对齐。 */
+            align-items: center;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- ==================== 下面这个 app 就是整个聊天网页真正显示出来的大框 ==================== -->
+
+<div class="app">
+
+
+    <!-- ==================== 1.最上面的标题栏 ==================== -->
+
+    <div class="top-bar">
+
+        <div>
+
+            <div class="title">
+                掌柜智库
+            </div>
+
+            <div class="subtitle">
+                本地知识库 + HyDE + 联网搜索
+            </div>
+
+        </div>
+
+
+        <div class="top-right">
+
+            <!-- 流式输出就是 AI 一边生成答案一边往页面蹦字，checked 表示网页一打开默认就开启。 -->
+            <label class="stream-box">
+
+                <input
+                        type="checkbox"
+                        id="streamToggle"
+                        checked
+                >
+
+                流式输出
+
+            </label>
+
+
+            <!-- 点击这个按钮以后，后面的 JavaScript 会把当前聊天记录清掉。 -->
+            <button
+                    class="clear-button"
+                    id="clearButton"
+            >
+                清空对话
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==================== 2.真正显示“你一句、AI一句”的聊天区域 ==================== -->
+
+    <div
+            class="chat"
+            id="chat"
+    >
+
+        <!-- 用户刚打开网页还没提问时，先在聊天区放一句 AI 欢迎语。 -->
+        <div class="message bot">
+
+            <div class="bubble">
+
+                你好，我是掌柜智库。
+
+                你可以直接询问已经导入知识库里的商品问题。
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==================== 3.最下面输入问题的地方 ==================== -->
+
+    <div class="input-area">
+
+        <!-- textarea 就是输入问题的大输入框，id="input" 相当于给它起名字，后面的 JavaScript 靠这个名字找到它。 -->
+        <textarea
+                id="input"
+                placeholder="输入你的问题，Enter发送，Shift+Enter换行"
+        ></textarea>
+
+
+        <!-- 这个就是发送按钮，id="sendButton" 是给它起名字，后面的 JavaScript 靠这个名字监听点击。 -->
+        <button
+                class="send-button"
+                id="sendButton"
+        >
+            发送
+        </button>
+
+    </div>
+
+</div>
+
+
+
+<script>
+
+    /* ==================== 1.API_BASE 就是查询后端的地址，后面所有请求都往这个 8001 服务发 ==================== */
+
+    const API_BASE =
+        "http://127.0.0.1:8001";
+
+
+    /* ==================== 2.先把网页上的聊天区、输入框和按钮找到，后面 JavaScript 才能控制它们 ==================== */
+
+    const chatEl =
+        document.getElementById("chat");
+
+    const inputEl =
+        document.getElementById("input");
+
+    const sendButton =
+        document.getElementById("sendButton");
+
+    const clearButton =
+        document.getElementById("clearButton");
+
+    const streamToggle =
+        document.getElementById("streamToggle");
+
+
+    /* ==================== 3.session_id 就是这场聊天的身份证，同一个身份证下的消息都算同一场聊天 ==================== */
+
+
+    /* localStorage 是浏览器自带的小仓库，这里先看看以前有没有把聊天身份证存在里面。 */
+    let sessionId =
+        localStorage.getItem(
+            "kb_session_id"
+        );
+
+
+    /* 如果没找到聊天身份证，就用当前时间加随机字符现场生成一个新的身份证。 */
+    if (!sessionId) {
+
+        sessionId =
+            "session-" +
+            Date.now() +
+            "-" +
+            Math.random()
+                .toString(36)
+                .slice(2);
+
+
+        /* 把新生成的聊天身份证放进浏览器的小仓库，下次刷新页面还能继续用同一个身份证。 */
+        localStorage.setItem(
+            "kb_session_id",
+            sessionId
+        );
+    }
+
+
+    /* ==================== 4.这个方法专门负责把聊天框自动滚到最下面，让最新消息一直出现在眼前 ==================== */
+
+    function scrollToBottom() {
+
+        /* scrollHeight 是全部聊天内容真正的高度，把 scrollTop 调到这里就相当于直接滚到最底下。 */
+        chatEl.scrollTop =
+            chatEl.scrollHeight;
+    }
+
+
+    /* ==================== 5.这个方法只负责把用户刚说的话显示在页面右边，还没有发给后端 ==================== */
+
+    function addUserMessage(text) {
+
+        /* 在网页里现场造一个新的 div 盒子，用来装这一整条用户消息。 */
+        const messageEl =
+            document.createElement("div");
+
+
+        /* 给这个盒子贴上 message 和 user 两个标签，让它套用用户消息的 CSS 样式。 */
+        messageEl.className =
+            "message user";
+
+
+        /* 再造一个小盒子，真正用来装用户说的文字。 */
+        const bubbleEl =
+            document.createElement("div");
+
+        bubbleEl.className =
+            "bubble";
+
+
+        /* textContent 会把内容老老实实当普通文字显示，不会把用户输入的 HTML 标签当网页代码执行。 */
+        bubbleEl.textContent =
+            text;
+
+
+        /* 把装文字的小气泡塞进整条用户消息的大盒子里面。 */
+        messageEl.appendChild(
+            bubbleEl
+        );
+
+
+        /* 再把整条用户消息塞进聊天区域，到这里页面上才真正看得到它。 */
+        chatEl.appendChild(
+            messageEl
+        );
+
+
+        /* 新消息出来以后自动滚到聊天最下面。 */
+        scrollToBottom();
+    }
+
+
+    /* ==================== 6.用户刚发问题时，先在左边造一个“正在思考...”的位置等 AI 回答 ==================== */
+
+    function addBotLoadingMessage() {
+
+        /* 先造一个新的 div，作为整条 AI 消息的大盒子。 */
+        const messageEl =
+            document.createElement("div");
+
+        messageEl.className =
+            "message bot";
+
+
+        /* 再造一个真正装 AI 文字的气泡。 */
+        const bubbleEl =
+            document.createElement("div");
+
+        bubbleEl.className =
+            "bubble";
+
+
+        /* innerHTML 会把里面的 HTML 标签当真正网页结构来解析，所以这里能真的生成一个 span，而不是只显示标签文字。 */
+        bubbleEl.innerHTML =
+            '<span class="typing">正在思考...</span>';
+
+
+        /* 把气泡塞进整条 AI 消息里。 */
+        messageEl.appendChild(
+            bubbleEl
+        );
+
+        /* 再把整条 AI 消息塞进聊天区域。 */
+        chatEl.appendChild(
+            messageEl
+        );
+
+
+        /* 自动滚到聊天最下面。 */
+        scrollToBottom();
+
+
+        /* 把这条 AI 消息返回出去，后面真正答案来了还要回来修改同一个气泡。 */
+        return messageEl;
+    }
+
+
+    /* ==================== 7.这个方法负责把 AI 最后的完整答案和相关图片显示出来 ==================== */
+
+    function showBotAnswer(
+        botMessageEl,
+        answer,
+        imageUrls = []
+    ) {
+
+        /* 在这一条 AI 消息里面找到 class 叫 bubble 的真正消息气泡。 */
+        const bubbleEl =
+            botMessageEl.querySelector(
+                ".bubble"
+            );
+
+
+        /* 把气泡里原来的“正在思考...”全部清空，准备放真正答案。 */
+        bubbleEl.innerHTML = "";
+
+
+        /* 新造一个 div 专门装 AI 最终文字答案。 */
+        const answerEl =
+            document.createElement("div");
+
+
+        /* 有答案就显示答案，没答案就显示“没有返回答案。”当兜底。 */
+        answerEl.textContent =
+            answer ||
+            "没有返回答案。";
+
+
+        /* 把最终文字答案塞进 AI 气泡里。 */
+        bubbleEl.appendChild(
+            answerEl
+        );
+
+
+        /* 如果 imageUrls 真的是一个列表，而且里面确实有图片地址，就继续显示图片。 */
+        if (
+            Array.isArray(imageUrls)
+            &&
+            imageUrls.length > 0
+        ) {
+
+            /* 先造一个大盒子，专门装所有相关图片。 */
+            const imageBox =
+                document.createElement("div");
+
+            imageBox.className =
+                "answer-images";
+
+
+            /* 把后端给的所有图片地址一个一个拿出来处理。 */
+            for (
+                const url
+                of imageUrls
+            ) {
+
+                /* 每拿到一个图片地址，就在网页里造一个真正的 img 图片元素。 */
+                const img =
+                    document.createElement("img");
+
+
+                /* 把当前图片地址交给 img，浏览器就会去这个地址加载图片。 */
+                img.src = url;
+
+
+                /* lazy 就是懒加载，图片还没滚到眼前时可以先不急着下载，省一点性能。 */
+                img.loading = "lazy";
+
+
+                /* 如果图片地址坏了加载失败，就把这张坏图隐藏起来，别显示一个难看的裂图图标。 */
+                img.addEventListener(
+                    "error",
+                    function () {
+
+                        img.style.display =
+                            "none";
+                    }
+                );
+
+
+                /* 把当前这张图片塞进图片区域。 */
+                imageBox.appendChild(
+                    img
+                );
+            }
+
+
+            /* 所有图片都处理好以后，把整个图片区域塞进 AI 气泡下面。 */
+            bubbleEl.appendChild(
+                imageBox
+            );
+        }
+
+
+        /* 最终答案显示完以后自动滚到聊天最下面。 */
+        scrollToBottom();
+    }
+
+
+    /* ==================== 8.流式回答时，每收到 AI 刚生成的一小截文字，就调用这里继续往原答案后面接 ==================== */
+
+    function appendBotText(
+        botMessageEl,
+        text
+    ) {
+
+        /* 先找到这一条 AI 消息里面真正显示内容的气泡。 */
+        const bubbleEl =
+            botMessageEl.querySelector(
+                ".bubble"
+            );
+
+
+        /* 看看气泡里面“正在思考...”这个提示还在不在。 */
+        const typingEl =
+            bubbleEl.querySelector(
+                ".typing"
+            );
+
+
+        /* 如果已经收到第一截真正答案，就把“正在思考...”删掉。 */
+        if (typingEl) {
+
+            typingEl.remove();
+        }
+
+
+        /* 把后端刚推过来的这一小截文字做成一个纯文字节点，不把它当 HTML 代码执行。 */
+        const textNode =
+            document.createTextNode(
+                text
+            );
+
+
+        /* 把这一小截文字接到 AI 气泡最后面，所以页面上会看到答案一点一点长出来。 */
+        bubbleEl.appendChild(
+            textNode
+        );
+
+
+        /* 每蹦出一点新文字都自动滚到最下面。 */
+        scrollToBottom();
+    }
+
+
+    /* ==================== 9.网页打开时，用这场聊天的身份证去后端拿以前的 MongoDB 聊天记录 ==================== */
+
+    async function loadHistory() {
+
+        try {
+
+            /* fetch 就是浏览器向后端要数据或发数据，这里是在请求 GET /history/当前聊天身份证。 */
+            const response =
+                await fetch(
+                    `${API_BASE}/history/${sessionId}`
+                );
+
+
+            /* 如果后端没有正常返回，就直接结束，不继续处理错误数据。 */
+            if (!response.ok) {
+
+                return;
+            }
+
+
+            /* 后端返回的是 JSON，也就是前后端都能看懂的一种数据格式，这里把它转成 JavaScript 对象。 */
+            const data =
+                await response.json();
+
+
+            /* 从后端结果里拿出真正的历史消息列表，如果没有就给一个空列表。 */
+            const items =
+                Array.isArray(data.items)
+                    ? data.items
+                    : [];
+
+
+            /* 如果根本没有历史消息，就直接结束。 */
+            if (items.length === 0) {
+
+                return;
+            }
+
+
+            /* 既然已经有历史记录，就先把页面当前默认的欢迎消息清掉。 */
+            chatEl.innerHTML = "";
+
+
+            /* 把后端拿回来的历史消息一条一条重新画到页面上。 */
+            for (
+                const item
+                of items
+            ) {
+
+
+                /* role 是 user 就说明这条历史消息是用户以前说的。 */
+                if (
+                    item.role === "user"
+                ) {
+
+                    addUserMessage(
+                        item.text || ""
+                    );
+                }
+
+
+                /* role 是 assistant 就说明这条历史消息是 AI 以前回答的。 */
+                else if (
+                    item.role === "assistant"
+                ) {
+
+                    /* 先造一个 AI 消息框。 */
+                    const botMessage =
+                        addBotLoadingMessage();
+
+
+                    /* 再把历史里的真正答案和图片塞进刚造的 AI 消息框。 */
+                    showBotAnswer(
+                        botMessage,
+                        item.text || "",
+                        item.image_urls || []
+                    );
+                }
+            }
+
+
+        }
+        catch (error) {
+
+            /* 历史记录加载失败不会影响继续聊天，所以这里只在浏览器控制台打印错误。 */
+            console.error(
+                "加载历史记录失败：",
+                error
+            );
+        }
+    }
+
+
+    /* ==================== 10.这个方法真正把用户问题通过 POST /query 发给查询后端 ==================== */
+
+    async function submitQuery(
+        question,
+        isStream
+    ) {
+
+        /* fetch 这里就是浏览器主动向后端发送一次 HTTP 请求。 */
+        const response =
+            await fetch(
+                `${API_BASE}/query`,
+                {
+
+                    /* POST 表示这次不是单纯拿东西，而是要给后端提交数据。 */
+                    method: "POST",
+
+
+                    /* 告诉后端：我这次发过去的内容是 JSON 格式。 */
+                    headers: {
+
+                        "Content-Type":
+                            "application/json"
+                    },
+
+
+                    /* JSON.stringify 会把 JavaScript 对象变成前后端都方便传输的 JSON 字符串。 */
+                    body: JSON.stringify(
+                        {
+
+                            /* query 就是用户刚刚真正输入的问题。 */
+                            query: question,
+
+
+                            /* 把这场聊天的身份证一起传给后端，后端才能知道上下文属于哪场聊天。 */
+                            session_id:
+                                sessionId,
+
+
+                            /* 告诉后端这次要不要一边生成一边往页面蹦字。 */
+                            is_stream:
+                                isStream
+                        }
+                    )
+                }
+            );
+
+
+        /* 如果后端返回的不是正常成功状态，就把后端错误内容拿出来并主动报错。 */
+        if (!response.ok) {
+
+            const errorText =
+                await response.text();
+
+            throw new Error(
+                errorText ||
+                "请求失败"
+            );
+        }
+
+
+        /* 请求成功后，把后端返回的 JSON 转成 JavaScript 对象再返回出去。 */
+        return await response.json();
+    }
+
+
+    /* ==================== 11.用户真正点击发送以后，整套聊天流程都从这里开始 ==================== */
+
+    async function onSend() {
+
+        /* 拿输入框里的文字，trim() 会把最前面和最后面的空格去掉。 */
+        const question =
+            inputEl.value.trim();
+
+
+        /* 如果用户什么都没输入，就直接结束，不发空问题给后端。 */
+        if (!question) {
+
+            return;
+        }
+
+
+        /* 看右上角“流式输出”有没有被勾上。 */
+        const isStream =
+            streamToggle.checked;
+
+
+        /* 问题已经拿到了，所以先把输入框清空。 */
+        inputEl.value = "";
+
+
+        /* 先把用户刚输入的问题显示到页面右边。 */
+        addUserMessage(
+            question
+        );
+
+
+        /* 再在左边先放一个“正在思考...”的 AI 消息框。 */
+        const botMessage =
+            addBotLoadingMessage();
+
+
+        /* 后端还没回答完时暂时锁住发送按钮，防止用户连续疯狂发送。 */
+        sendButton.disabled =
+            true;
+
+
+        try {
+
+            /* 调用前面的 submitQuery()，把用户问题真正提交给 POST /query。 */
+            const data =
+                await submitQuery(
+                    question,
+                    isStream
+                );
+
+
+            /* 如果没有开启流式输出，后端会等完整答案生成完以后一次性返回。 */
+            if (!isStream) {
+
+                /* 把后端一次性返回的完整答案和图片直接显示出来。 */
+                showBotAnswer(
+
+                    botMessage,
+
+                    data.answer || "",
+
+                    data.image_urls || []
+                );
+
+
+                /* 这一问已经结束，所以把发送按钮重新打开。 */
+                sendButton.disabled =
+                    false;
+
+
+                return;
+            }
+
+
+            /* ==================== 下面开始处理流式回答 ==================== */
+
+
+            /* EventSource 是浏览器专门用来接收后端连续消息的东西，这里连接的是当前聊天身份证对应的 SSE 接口。 */
+            const eventSource =
+                new EventSource(
+
+                    `${API_BASE}/stream/${sessionId}`
+                );
+
+
+            /* ==================== 后端推来 delta 时执行这里，delta 就是大模型刚生成的一小截文字 ==================== */
+
+            eventSource.addEventListener(
+                "delta",
+                function (event) {
+
+                    try {
+
+                        /* SSE 推来的 event.data 还是 JSON 字符串，所以先把它转回 JavaScript 对象。 */
+                        const data =
+                            JSON.parse(
+                                event.data
+                            );
+
+
+                        /* 从这次后端消息里面拿出 AI 刚生成的这一小截文字。 */
+                        const delta =
+                            data.delta || "";
+
+
+                        /* 只有真的拿到文字时，才把这一小截继续接到 AI 气泡后面。 */
+                        if (delta) {
+
+                            appendBotText(
+                                botMessage,
+                                delta
+                            );
+                        }
+
+                    }
+                    catch (error) {
+
+                        /* 如果后端这条 delta 数据格式有问题，就在浏览器控制台打印出来方便排查。 */
+                        console.error(
+                            "解析delta失败：",
+                            error
+                        );
+                    }
+                }
+            );
+
+
+            /* ==================== 后端推来 final 时说明这一整次 AI 回答已经彻底结束 ==================== */
+
+            eventSource.addEventListener(
+                "final",
+                function (event) {
+
+                    try {
+
+                        /* final 里面也是 JSON 字符串，所以先转成 JavaScript 对象。 */
+                        const data =
+                            JSON.parse(
+                                event.data
+                            );
+
+
+                        /* 用 final 里面的完整答案重新刷一次气泡，并把后端返回的相关图片一起显示出来。 */
+                        showBotAnswer(
+
+                            botMessage,
+
+                            data.answer || "",
+
+                            data.image_urls || []
+                        );
+
+                    }
+                    catch (error) {
+
+                        /* final 数据解析失败时，在浏览器控制台打印错误。 */
+                        console.error(
+                            "解析final失败：",
+                            error
+                        );
+                    }
+
+
+                    /* 这次回答已经结束，所以把这条 SSE 长连接关掉。 */
+                    eventSource.close();
+
+
+                    /* 回答结束后重新允许用户点击发送。 */
+                    sendButton.disabled =
+                        false;
+                }
+            );
+
+
+            /* ==================== SSE 连接本身出错，或者后端主动发 error 事件时执行这里 ==================== */
+
+            eventSource.addEventListener(
+                "error",
+                function (event) {
+
+                    /* 先准备一个默认错误提示，如果后端给了更具体错误，下面再替换。 */
+                    let errorMessage =
+                        "SSE连接出现错误";
+
+
+                    try {
+
+                        /* 如果后端这次错误消息里面真的带了内容，就把具体错误拿出来。 */
+                        if (event.data) {
+
+                            const data =
+                                JSON.parse(
+                                    event.data
+                                );
+
+                            errorMessage =
+                                data.error ||
+                                errorMessage;
+                        }
+
+                    }
+                    catch (_) {
+
+                    }
+
+
+                    /* 把错误直接显示到原本 AI 应该回答的位置。 */
+                    showBotAnswer(
+
+                        botMessage,
+
+                        "请求失败：" +
+                        errorMessage
+                    );
+
+
+                    /* 出错以后这条 SSE 长连接也没必要继续留着了，所以直接关掉。 */
+                    eventSource.close();
+
+
+                    /* 出错也算这一问结束，所以重新允许点击发送按钮。 */
+                    sendButton.disabled =
+                        false;
+                }
+            );
+
+
+        }
+        catch (error) {
+
+            /* 如果连最开始的 POST /query 都失败了，就直接把错误显示在 AI 气泡里面。 */
+            showBotAnswer(
+
+                botMessage,
+
+                "请求失败：" +
+                error.message
+            );
+
+
+            /* 请求失败以后也要把发送按钮重新打开，不然用户就再也点不了了。 */
+            sendButton.disabled =
+                false;
+        }
+    }
+
+
+    /* ==================== 12.用户点击“发送”按钮时，就执行上面的 onSend() 整套发送流程 ==================== */
+
+    sendButton.addEventListener(
+        "click",
+        onSend
+    );
+
+
+    /* ==================== 13.用户在输入框里按 Enter 也可以直接发送 ==================== */
+
+    inputEl.addEventListener(
+        "keydown",
+        function (event) {
+
+            /* 只有按下 Enter 而且没有同时按 Shift 时，才把它当成“发送”。 */
+            if (
+                event.key === "Enter"
+                &&
+                !event.shiftKey
+            ) {
+
+                /* 阻止 textarea 原本按 Enter 就换行的行为。 */
+                event.preventDefault();
+
+
+                /* 改成执行发送消息。 */
+                onSend();
+            }
+        }
+    );
+
+
+    /* ==================== 14.用户点击“清空对话”以后，既删 MongoDB 历史，也清空当前页面 ==================== */
+
+    clearButton.addEventListener(
+        "click",
+        async function () {
+
+
+            /* 真删之前先弹个确认框，防止用户手滑误删。 */
+            const confirmed =
+                confirm(
+                    "确定清空当前对话吗？"
+                );
+
+
+            /* 用户点取消就直接结束，什么都不删。 */
+            if (!confirmed) {
+
+                return;
+            }
+
+
+            try {
+
+                /* 调用 DELETE /history/当前聊天身份证，让后端真正把 MongoDB 里的这场聊天记录删掉。 */
+                await fetch(
+
+                    `${API_BASE}/history/${sessionId}`,
+
+                    {
+                        method: "DELETE"
+                    }
+                );
+
+            }
+            catch (error) {
+
+                /* 后端删除失败时先在浏览器控制台打印出来。 */
+                console.error(
+                    "删除MongoDB历史失败：",
+                    error
+                );
+            }
+
+
+            /* 把当前网页聊天区里面显示的所有消息也一起清空。 */
+            chatEl.innerHTML = "";
+
+
+            /* 清空以后重新造一条 AI 消息。 */
+            const botMessage =
+                addBotLoadingMessage();
+
+
+            /* 把这条 AI 消息改成“对话已经清空”的提示。 */
+            showBotAnswer(
+
+                botMessage,
+
+                "对话已经清空，可以重新提问。"
+            );
+        }
+    );
+
+
+    /* ==================== 15.网页一打开，就自动用 session_id 去后端加载以前的聊天记录 ==================== */
+
+    loadHistory();
+
+
+    /* 页面打开以后直接把光标放进输入框，用户不用再先点一下输入框。 */
+    inputEl.focus();
+
+</script>
+
+
+</body>
+
+</html>

@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+
+    <!-- 告诉浏览器：这个网页里的文字按 UTF-8 来读，这样中文一般不会乱码。 -->
+    <meta charset="UTF-8">
+
+    <!-- 告诉浏览器：网页宽度跟着当前设备屏幕宽度走，手机打开时不会硬塞成电脑版宽度。 -->
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>掌柜智库 - 知识库导入</title>
+
+
+    <style>
+
+        /* ==================== 1.先给整个网页定几个最基础的规矩 ==================== */
+
+        * {
+            /* 算宽高时把 padding 和 border 也算进去，这样写 200px 最终总宽就是 200px。 */
+            box-sizing: border-box;
+        }
+
+
+        body {
+
+            /* 去掉浏览器默认给网页四周留的那圈白边。 */
+            margin: 0;
+
+            /* 整个网页最少也要有一整屏那么高。 */
+            min-height: 100vh;
+
+            /* 设置整个网页优先使用的字体。 */
+            font-family:
+                    "Microsoft YaHei",
+                    Arial,
+                    sans-serif;
+
+            /* 设置整个页面最外面的浅灰色背景。 */
+            background: #f3f5f7;
+
+            /* 设置整个页面默认文字颜色。 */
+            color: #222;
+        }
+
+
+        /* ==================== 2.app 就是整个导入页面的大外壳 ==================== */
+
+        .app {
+
+            /* 页面最多宽 900px，屏幕再宽它也不会无限往两边撑。 */
+            max-width: 900px;
+
+            /* 上下留 30px，左右 auto 表示让整个页面自动居中。 */
+            margin: 30px auto;
+
+            /* 主页面使用白色背景。 */
+            background: white;
+
+            /* 把四个角磨圆。 */
+            border-radius: 16px;
+
+            /* 给整个页面加一点阴影，看起来像一张浮起来的卡片。 */
+            box-shadow:
+                    0 8px 30px
+                    rgba(0, 0, 0, 0.08);
+
+            /* 超出去的内容不要跑出圆角外面。 */
+            overflow: hidden;
+        }
+
+
+        /* ==================== 3.最上面的标题栏 ==================== */
+
+        .top-bar {
+
+            /* 标题栏四周留一点空间。 */
+            padding: 22px 26px;
+
+            /* 标题栏下面画一条浅灰色分割线。 */
+            border-bottom:
+                    1px solid #eeeeee;
+        }
+
+
+        .title {
+
+            /* 主标题文字大小。 */
+            font-size: 22px;
+
+            /* 主标题变粗。 */
+            font-weight: bold;
+        }
+
+
+        .subtitle {
+
+            /* 副标题和主标题隔开一点。 */
+            margin-top: 7px;
+
+            /* 副标题文字稍微小一点。 */
+            font-size: 13px;
+
+            /* 副标题使用灰色。 */
+            color: #888;
+        }
+
+
+        /* ==================== 4.真正上传文件的区域 ==================== */
+
+        .content {
+
+            /* 上传区域四周留 28px。 */
+            padding: 28px;
+        }
+
+
+        .upload-box {
+
+            /* 给上传区域画一圈蓝色虚线。 */
+            border:
+                    2px dashed #91caff;
+
+            /* 上传区域四个角磨圆。 */
+            border-radius: 14px;
+
+            /* 上传区域里面留大一点空间。 */
+            padding: 45px 25px;
+
+            /* 里面所有东西居中。 */
+            text-align: center;
+
+            /* 给上传区域一个很淡的蓝色背景。 */
+            background: #f8fbff;
+
+            /* 鼠标放上去变成小手，提醒用户这里可以点。 */
+            cursor: pointer;
+
+            /* 背景和边框变化时稍微平滑一点。 */
+            transition: 0.2s;
+        }
+
+
+        .upload-box:hover {
+
+            /* 鼠标放上去时把边框颜色变深一点。 */
+            border-color: #1677ff;
+
+            /* 鼠标放上去时背景也稍微变蓝一点。 */
+            background: #f0f7ff;
+        }
+
+
+        .upload-icon {
+
+            /* 文件图标稍微大一点。 */
+            font-size: 46px;
+
+            /* 图标下面留一点距离。 */
+            margin-bottom: 14px;
+        }
+
+
+        .upload-title {
+
+            /* 上传区域主提示文字大小。 */
+            font-size: 18px;
+
+            /* 主提示变粗。 */
+            font-weight: bold;
+        }
+
+
+        .upload-tip {
+
+            /* 提示文字和上面的标题隔开一点。 */
+            margin-top: 10px;
+
+            /* 提示文字稍微小一点。 */
+            font-size: 13px;
+
+            /* 提示文字使用灰色。 */
+            color: #888;
+        }
+
+
+        /* 真正的文件选择框藏起来，因为我们自己做了一个更好看的上传区域。 */
+        #fileInput {
+
+            display: none;
+        }
+
+
+        /* ==================== 5.用户选完文件以后显示文件信息 ==================== */
+
+        .file-info {
+
+            /* 和上传区域隔开一点。 */
+            margin-top: 20px;
+
+            /* 四周留一点空间。 */
+            padding: 16px;
+
+            /* 使用浅灰色背景。 */
+            background: #f7f8fa;
+
+            /* 四个角磨圆。 */
+            border-radius: 10px;
+
+            /* 默认先隐藏，选了文件以后 JavaScript 再让它出现。 */
+            display: none;
+        }
+
+
+        .file-name {
+
+            /* 文件名字稍微加粗。 */
+            font-weight: bold;
+
+            /* 文件名字太长时允许换行。 */
+            word-break: break-all;
+        }
+
+
+        .file-size {
+
+            /* 文件大小和文件名隔开一点。 */
+            margin-top: 7px;
+
+            /* 文件大小文字小一点。 */
+            font-size: 13px;
+
+            /* 文件大小使用灰色。 */
+            color: #888;
+        }
+
+
+        /* ==================== 6.上传和重新选择按钮 ==================== */
+
+        .button-area {
+
+            /* 和上面的文件信息隔开一点。 */
+            margin-top: 22px;
+
+            /* 两个按钮横着排。 */
+            display: flex;
+
+            /* 两个按钮之间隔 12px。 */
+            gap: 12px;
+        }
+
+
+        .button {
+
+            /* 两个按钮平均分掉这一整行宽度。 */
+            flex: 1;
+
+            /* 按钮高度。 */
+            height: 46px;
+
+            /* 去掉浏览器默认按钮边框。 */
+            border: none;
+
+            /* 把按钮四个角磨圆。 */
+            border-radius: 10px;
+
+            /* 鼠标放上去变成小手。 */
+            cursor: pointer;
+
+            /* 设置按钮文字大小。 */
+            font-size: 15px;
+        }
+
+
+        .upload-button {
+
+            /* 上传按钮使用蓝色。 */
+            background: #1677ff;
+
+            /* 上传按钮文字使用白色。 */
+            color: white;
+        }
+
+
+        .upload-button:hover {
+
+            /* 鼠标放到上传按钮上时蓝色变深一点。 */
+            background: #0958d9;
+        }
+
+
+        .reset-button {
+
+            /* 重新选择按钮用浅灰色。 */
+            background: #f1f3f5;
+
+            /* 重新选择按钮使用深色文字。 */
+            color: #333;
+        }
+
+
+        .reset-button:hover {
+
+            /* 鼠标放上去时背景稍微变深一点。 */
+            background: #e5e7eb;
+        }
+
+
+        .button:disabled {
+
+            /* 按钮不能点的时候颜色变淡。 */
+            opacity: 0.5;
+
+            /* 按钮不能点的时候鼠标也不要显示小手。 */
+            cursor: not-allowed;
+        }
+
+
+        /* ==================== 7.导入进度区域 ==================== */
+
+        .status-box {
+
+            /* 和上面的按钮隔开一点。 */
+            margin-top: 28px;
+
+            /* 四周留一点空间。 */
+            padding: 20px;
+
+            /* 画一圈浅灰色边框。 */
+            border:
+                    1px solid #eeeeee;
+
+            /* 四个角磨圆。 */
+            border-radius: 12px;
+
+            /* 默认先隐藏，真正开始上传以后再显示。 */
+            display: none;
+        }
+
+
+        .status-title {
+
+            /* 状态标题变粗一点。 */
+            font-weight: bold;
+        }
+
+
+        .status-message {
+
+            /* 状态提示和标题隔开一点。 */
+            margin-top: 8px;
+
+            /* 提示文字稍微小一点。 */
+            font-size: 14px;
+
+            /* 提示文字使用灰色。 */
+            color: #666;
+        }
+
+
+        /* ==================== 8.进度条 ==================== */
+
+        .progress-background {
+
+            /* 和状态文字隔开一点。 */
+            margin-top: 18px;
+
+            /* 整条进度条高度。 */
+            height: 14px;
+
+            /* 没走到的部分使用浅灰色。 */
+            background: #e9ecef;
+
+            /* 把整条进度条磨圆。 */
+            border-radius: 999px;
+
+            /* 蓝色进度不要跑出圆角。 */
+            overflow: hidden;
+        }
+
+
+        .progress-bar {
+
+            /* 一开始进度是 0，所以蓝色部分宽度也是 0。 */
+            width: 0%;
+
+            /* 蓝色进度条高度跟外面一样高。 */
+            height: 100%;
+
+            /* 已完成部分使用蓝色。 */
+            background: #1677ff;
+
+            /* 进度变化时不要突然跳过去，让它稍微平滑一点。 */
+            transition:
+                    width 0.3s;
+        }
+
+
+        .progress-text {
+
+            /* 百分比和进度条隔开一点。 */
+            margin-top: 8px;
+
+            /* 百分比靠右显示。 */
+            text-align: right;
+
+            /* 百分比文字稍微小一点。 */
+            font-size: 13px;
+
+            /* 百分比使用灰色。 */
+            color: #888;
+        }
+
+
+        /* ==================== 9.导入成功以后显示结果 ==================== */
+
+        .result-box {
+
+            /* 和进度区域隔开一点。 */
+            margin-top: 22px;
+
+            /* 四周留一点空间。 */
+            padding: 18px;
+
+            /* 成功以后使用很淡的绿色背景。 */
+            background: #f6ffed;
+
+            /* 画一圈浅绿色边框。 */
+            border:
+                    1px solid #b7eb8f;
+
+            /* 四个角磨圆。 */
+            border-radius: 10px;
+
+            /* 默认先隐藏，真正导入成功以后再显示。 */
+            display: none;
+        }
+
+
+        .result-title {
+
+            /* 成功标题使用绿色。 */
+            color: #389e0d;
+
+            /* 成功标题变粗。 */
+            font-weight: bold;
+
+            /* 成功标题下面隔开一点。 */
+            margin-bottom: 14px;
+        }
+
+
+        .result-row {
+
+            /* 每一条结果之间隔开一点。 */
+            margin-top: 8px;
+
+            /* 文字稍微小一点。 */
+            font-size: 14px;
+
+            /* 太长的路径允许从中间换行。 */
+            word-break: break-all;
+        }
+
+
+        .result-label {
+
+            /* 左边字段名字变粗一点。 */
+            font-weight: bold;
+        }
+
+
+        /* ==================== 10.失败提示区域 ==================== */
+
+        .error-box {
+
+            /* 和上面隔开一点。 */
+            margin-top: 22px;
+
+            /* 四周留一点空间。 */
+            padding: 16px;
+
+            /* 错误区域使用很淡的红色背景。 */
+            background: #fff2f0;
+
+            /* 画一圈浅红色边框。 */
+            border:
+                    1px solid #ffccc7;
+
+            /* 四个角磨圆。 */
+            border-radius: 10px;
+
+            /* 错误文字使用红色。 */
+            color: #cf1322;
+
+            /* 默认隐藏，真正报错以后再显示。 */
+            display: none;
+
+            /* 错误太长时允许换行。 */
+            word-break: break-all;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- ==================== 整个知识库导入页面的大外壳 ==================== -->
+
+<div class="app">
+
+
+    <!-- ==================== 1.顶部标题 ==================== -->
+
+    <div class="top-bar">
+
+        <div class="title">
+            掌柜智库 · 知识库导入
+        </div>
+
+        <div class="subtitle">
+            上传 PDF 或 Markdown 文件，系统会自动解析、切片、向量化并写入知识库
+        </div>
+
+    </div>
+
+
+    <!-- ==================== 2.真正上传文件的区域 ==================== -->
+
+    <div class="content">
+
+
+        <!-- 点击这个大框以后，后面的 JavaScript 会帮我们打开真正的文件选择框。 -->
+        <div
+                class="upload-box"
+                id="uploadBox"
+        >
+
+            <div class="upload-icon">
+                📄
+            </div>
+
+            <div class="upload-title">
+                点击选择知识库文件
+            </div>
+
+            <div class="upload-tip">
+                目前支持 PDF 和 Markdown 文件
+            </div>
+
+        </div>
+
+
+        <!-- 这才是浏览器真正的文件选择框，只不过我们把它藏起来，用上面那个漂亮的大框代替它。 -->
+        <input
+                type="file"
+                id="fileInput"
+                accept=".pdf,.md"
+        >
+
+
+        <!-- ==================== 3.选完文件以后在这里显示文件名和大小 ==================== -->
+
+        <div
+                class="file-info"
+                id="fileInfo"
+        >
+
+            <div
+                    class="file-name"
+                    id="fileName"
+            >
+            </div>
+
+            <div
+                    class="file-size"
+                    id="fileSize"
+            >
+            </div>
+
+        </div>
+
+
+        <!-- ==================== 4.上传和重新选择按钮 ==================== -->
+
+        <div class="button-area">
+
+            <!-- 一开始还没选文件，所以这个按钮先锁住，选完文件以后 JavaScript 再把它打开。 -->
+            <button
+                    class="button upload-button"
+                    id="uploadButton"
+                    disabled
+            >
+                开始导入
+            </button>
+
+
+            <!-- 点击这个按钮以后，把当前选择的文件清掉，重新开始。 -->
+            <button
+                    class="button reset-button"
+                    id="resetButton"
+            >
+                重新选择
+            </button>
+
+        </div>
+
+
+        <!-- ==================== 5.真正开始导入以后在这里显示当前进度 ==================== -->
+
+        <div
+                class="status-box"
+                id="statusBox"
+        >
+
+            <div
+                    class="status-title"
+                    id="statusTitle"
+            >
+                正在准备
+            </div>
+
+            <div
+                    class="status-message"
+                    id="statusMessage"
+            >
+                正在准备导入任务
+            </div>
+
+
+            <!-- 这是整个灰色进度条的大底板。 -->
+            <div class="progress-background">
+
+                <!-- 这个蓝色小条会根据 progress 从 0% 慢慢变成 100%。 -->
+                <div
+                        class="progress-bar"
+                        id="progressBar"
+                >
+                </div>
+
+            </div>
+
+
+            <!-- 这里单独显示 0%、30%、100% 这种具体数字。 -->
+            <div
+                    class="progress-text"
+                    id="progressText"
+            >
+                0%
+            </div>
+
+        </div>
+
+
+        <!-- ==================== 6.知识库导入成功以后在这里显示最终结果 ==================== -->
+
+        <div
+                class="result-box"
+                id="resultBox"
+        >
+
+            <div class="result-title">
+                知识库导入完成
+            </div>
+
+
+            <div class="result-row">
+
+                <span class="result-label">
+                    文件标题：
+                </span>
+
+                <span id="resultFileTitle">
+                    -
+                </span>
+
+            </div>
+
+
+            <div class="result-row">
+
+                <span class="result-label">
+                    识别商品：
+                </span>
+
+                <span id="resultItemName">
+                    -
+                </span>
+
+            </div>
+
+
+            <div class="result-row">
+
+                <span class="result-label">
+                    切片数量：
+                </span>
+
+                <span id="resultChunkCount">
+                    -
+                </span>
+
+            </div>
+
+
+            <div class="result-row">
+
+                <span class="result-label">
+                    Markdown：
+                </span>
+
+                <span id="resultMdPath">
+                    -
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- ==================== 7.导入失败以后在这里显示错误原因 ==================== -->
+
+        <div
+                class="error-box"
+                id="errorBox"
+        >
+        </div>
+
+
+    </div>
+
+</div>
+
+
+
+<script>
+
+    /* ==================== 1.API_BASE 就是导入后端地址，你的 import_service.py 现在运行在 8000 端口 ==================== */
+
+    const API_BASE =
+        "http://127.0.0.1:8000";
+
+
+    /* ==================== 2.先把网页上后面要操作的按钮、文字和进度条全部找到 ==================== */
+
+    const uploadBox =
+        document.getElementById(
+            "uploadBox"
+        );
+
+    const fileInput =
+        document.getElementById(
+            "fileInput"
+        );
+
+    const fileInfo =
+        document.getElementById(
+            "fileInfo"
+        );
+
+    const fileName =
+        document.getElementById(
+            "fileName"
+        );
+
+    const fileSize =
+        document.getElementById(
+            "fileSize"
+        );
+
+    const uploadButton =
+        document.getElementById(
+            "uploadButton"
+        );
+
+    const resetButton =
+        document.getElementById(
+            "resetButton"
+        );
+
+    const statusBox =
+        document.getElementById(
+            "statusBox"
+        );
+
+    const statusTitle =
+        document.getElementById(
+            "statusTitle"
+        );
+
+    const statusMessage =
+        document.getElementById(
+            "statusMessage"
+        );
+
+    const progressBar =
+        document.getElementById(
+            "progressBar"
+        );
+
+    const progressText =
+        document.getElementById(
+            "progressText"
+        );
+
+    const resultBox =
+        document.getElementById(
+            "resultBox"
+        );
+
+    const resultFileTitle =
+        document.getElementById(
+            "resultFileTitle"
+        );
+
+    const resultItemName =
+        document.getElementById(
+            "resultItemName"
+        );
+
+    const resultChunkCount =
+        document.getElementById(
+            "resultChunkCount"
+        );
+
+    const resultMdPath =
+        document.getElementById(
+            "resultMdPath"
+        );
+
+    const errorBox =
+        document.getElementById(
+            "errorBox"
+        );
+
+
+    /* ==================== 3.selectedFile 专门记住用户当前选中的那个文件 ==================== */
+
+    let selectedFile =
+        null;
+
+
+    /* ==================== 4.点击漂亮的上传大框时，实际上偷偷点击那个被隐藏的真正文件选择框 ==================== */
+
+    uploadBox.addEventListener(
+        "click",
+        function () {
+
+            fileInput.click();
+        }
+    );
+
+
+    /* ==================== 5.用户真正选择完文件以后执行这里 ==================== */
+
+    fileInput.addEventListener(
+        "change",
+        function () {
+
+            /* files[0] 就是用户这一次选择的第一个文件。 */
+            const file =
+                fileInput.files[0];
+
+
+            /* 如果用户最后又取消选择了，就什么都不做。 */
+            if (!file) {
+
+                return;
+            }
+
+
+            /* 把当前文件保存起来，后面点击“开始导入”时还要拿它上传给后端。 */
+            selectedFile =
+                file;
+
+
+            /* 把文件名字显示到页面上。 */
+            fileName.textContent =
+                "已选择：" +
+                file.name;
+
+
+            /* 把文件真实字节大小换成比较好看的 KB 或 MB 再显示。 */
+            fileSize.textContent =
+                "文件大小：" +
+                formatFileSize(
+                    file.size
+                );
+
+
+            /* 文件已经选好了，所以把文件信息区域显示出来。 */
+            fileInfo.style.display =
+                "block";
+
+
+            /* 文件已经选好了，所以“开始导入”按钮现在可以点了。 */
+            uploadButton.disabled =
+                false;
+
+
+            /* 用户重新选文件以后，把上一次可能留下的错误提示隐藏掉。 */
+            errorBox.style.display =
+                "none";
+
+
+            /* 用户重新选文件以后，把上一次导入成功结果也隐藏掉。 */
+            resultBox.style.display =
+                "none";
+        }
+    );
+
+
+    /* ==================== 6.把文件字节数换成 B、KB、MB 这种更容易看懂的大小 ==================== */
+
+    function formatFileSize(
+        bytes
+    ) {
+
+        /* 小于 1024 字节时，直接显示多少 B。 */
+        if (
+            bytes < 1024
+        ) {
+
+            return bytes +
+                " B";
+        }
+
+
+        /* 小于 1MB 时，就换算成 KB。 */
+        if (
+            bytes < 1024 * 1024
+        ) {
+
+            return (
+                bytes / 1024
+            ).toFixed(2) +
+                " KB";
+        }
+
+
+        /* 再大的文件就直接换成 MB。 */
+        return (
+            bytes /
+            1024 /
+            1024
+        ).toFixed(2) +
+            " MB";
+    }
+
+
+    /* ==================== 7.点击“开始导入”以后，真正把文件交给后端 POST /upload ==================== */
+
+    uploadButton.addEventListener(
+        "click",
+        async function () {
+
+            /* 如果根本没有选文件，就直接结束，不能上传空气。 */
+            if (!selectedFile) {
+
+                return;
+            }
+
+
+            /* 开始上传以后暂时把按钮锁住，防止用户连续点十几次生成十几个任务。 */
+            uploadButton.disabled =
+                true;
+
+
+            /* 真正开始任务以后把状态区域显示出来。 */
+            statusBox.style.display =
+                "block";
+
+
+            /* 新任务开始以后先把以前成功结果隐藏掉。 */
+            resultBox.style.display =
+                "none";
+
+
+            /* 新任务开始以后先把以前错误提示隐藏掉。 */
+            errorBox.style.display =
+                "none";
+
+
+            /* 一开始先显示正在上传。 */
+            updateProgress(
+                0,
+                "正在上传文件",
+                "正在把文件交给后端"
+            );
+
+
+            try {
+
+                /* FormData 可以理解成一个专门装上传文件的快递盒。 */
+                const formData =
+                    new FormData();
+
+
+                /* 后端 POST /upload 接收的字段名字叫 file，所以这里也必须叫 file。 */
+                formData.append(
+                    "file",
+                    selectedFile
+                );
+
+
+                /* fetch 在这里就是浏览器把装着文件的快递盒发送到后端 /upload。 */
+                const response =
+                    await fetch(
+                        `${API_BASE}/upload`,
+                        {
+
+                            /* POST 表示这次是往后端提交东西。 */
+                            method: "POST",
+
+                            /* body 就是刚才装好文件的 FormData 快递盒。 */
+                            body: formData
+                        }
+                    );
+
+
+                /* 如果后端没有正常接收文件，就把后端返回的错误内容拿出来报错。 */
+                if (!response.ok) {
+
+                    const errorText =
+                        await response.text();
+
+                    throw new Error(
+                        errorText ||
+                        "文件上传失败"
+                    );
+                }
+
+
+                /* 后端正常接收文件以后，会返回一份 JSON 数据。 */
+                const data =
+                    await response.json();
+
+
+                /* 从后端返回结果里面拿到这个任务自己的 task_id。 */
+                const taskId =
+                    data.task_id;
+
+
+                /* 如果后端连 task_id 都没给，就说明这次返回的数据不正常。 */
+                if (!taskId) {
+
+                    throw new Error(
+                        "后端没有返回 task_id"
+                    );
+                }
+
+
+                /* 文件已经交给后端了，接下来开始不停询问这个任务做到哪一步了。 */
+                await watchTask(
+                    taskId
+                );
+
+            }
+            catch (error) {
+
+                /* 只要上传过程任何地方报错，就统一在这里显示错误。 */
+                showError(
+                    error.message ||
+                    String(error)
+                );
+
+
+                /* 出错以后重新把上传按钮打开，让用户还能重试。 */
+                uploadButton.disabled =
+                    false;
+            }
+        }
+    );
+
+
+    /* ==================== 8.watchTask 就是不停问后端：这个 task_id 的任务现在干到哪了 ==================== */
+
+    async function watchTask(
+        taskId
+    ) {
+
+        /* while(true) 就是一直循环，直到下面碰到 completed 或 error 才主动停下来。 */
+        while (true) {
+
+            /* 每一轮都去请求 GET /status/这个任务身份证。 */
+            const response =
+                await fetch(
+                    `${API_BASE}/status/${taskId}`
+                );
+
+
+            /* 连状态接口都请求失败时，直接当成错误。 */
+            if (!response.ok) {
+
+                throw new Error(
+                    "获取导入进度失败"
+                );
+            }
+
+
+            /* 把后端返回的 JSON 状态数据转成 JavaScript 对象。 */
+            const data =
+                await response.json();
+
+
+            /* progress 就是后端告诉我们的当前百分比，没有的话先当成 0。 */
+            const progress =
+                data.progress || 0;
+
+
+            /* message 就是后端告诉我们的当前提示，没有的话就显示“正在处理中”。 */
+            const message =
+                data.message ||
+                "正在处理中";
+
+
+            /* 根据后端现在的状态更新页面上的进度条和文字。 */
+            updateProgress(
+                progress,
+                getStatusTitle(
+                    data.status
+                ),
+                message
+            );
+
+
+            /* completed 表示整个知识库导入流程彻底跑完了。 */
+            if (
+                data.status ===
+                "completed"
+            ) {
+
+                /* 后端最后返回的 result 里面装着文件标题、商品名、切片数量这些结果。 */
+                showResult(
+                    data.result || {}
+                );
+
+
+                /* 成功以后让上传按钮重新可以点击。 */
+                uploadButton.disabled =
+                    false;
+
+
+                /* return 就是结束整个 watchTask，不再继续问后端了。 */
+                return;
+            }
+
+
+            /* error 表示后端任务执行失败了。 */
+            if (
+                data.status ===
+                "error"
+            ) {
+
+                /* 把后端返回的具体错误丢出去，让外面的 catch 统一处理。 */
+                throw new Error(
+                    data.error ||
+                    data.message ||
+                    "知识库导入失败"
+                );
+            }
+
+
+            /* 任务还没做完时先等 1.5 秒，不要一秒钟问后端几百次。 */
+            await sleep(
+                1500
+            );
+        }
+    }
+
+
+    /* ==================== 9.把后端 pending、processing、completed 这些英文状态换成页面上的中文 ==================== */
+
+    function getStatusTitle(
+        status
+    ) {
+
+        /* pending 表示任务已经创建了，但是还在等着真正开始。 */
+        if (
+            status === "pending"
+        ) {
+
+            return "等待处理";
+        }
+
+
+        /* processing 表示后端现在正在真正处理文件。 */
+        if (
+            status === "processing"
+        ) {
+
+            return "正在导入";
+        }
+
+
+        /* completed 表示整条导入流程已经成功结束。 */
+        if (
+            status === "completed"
+        ) {
+
+            return "导入完成";
+        }
+
+
+        /* error 表示导入过程出了问题。 */
+        if (
+            status === "error"
+        ) {
+
+            return "导入失败";
+        }
+
+
+        /* 碰到其他没见过的状态时就用一个兜底文字。 */
+        return "处理中";
+    }
+
+
+    /* ==================== 10.这个方法专门更新页面上的进度标题、提示文字和蓝色进度条 ==================== */
+
+    function updateProgress(
+        progress,
+        title,
+        message
+    ) {
+
+        /* 把传进来的进度强行限制在 0 到 100 之间，防止后端哪天给个 150 把进度条撑出去。 */
+        const safeProgress =
+            Math.max(
+                0,
+                Math.min(
+                    100,
+                    Number(progress) || 0
+                )
+            );
+
+
+        /* 更新当前状态标题。 */
+        statusTitle.textContent =
+            title;
+
+
+        /* 更新当前状态下面那句说明。 */
+        statusMessage.textContent =
+            message;
+
+
+        /* 根据百分比修改蓝色进度条真正的宽度。 */
+        progressBar.style.width =
+            safeProgress + "%";
+
+
+        /* 把具体百分比数字也显示出来。 */
+        progressText.textContent =
+            safeProgress + "%";
+    }
+
+
+    /* ==================== 11.任务成功以后，把后端最后返回的结果显示出来 ==================== */
+
+    function showResult(
+        result
+    ) {
+
+        /* 成功以后把整个结果区域显示出来。 */
+        resultBox.style.display =
+            "block";
+
+
+        /* 显示后端识别出来的文件标题。 */
+        resultFileTitle.textContent =
+            result.file_title ||
+            "-";
+
+
+        /* 显示后端识别出来的商品名字。 */
+        resultItemName.textContent =
+            result.item_name ||
+            "-";
+
+
+        /* 显示这个文件最后一共切成了多少个 chunk，也就是多少个知识切片。 */
+        resultChunkCount.textContent =
+            result.chunk_count ??
+            "-";
+
+
+        /* 显示 MinerU 最后生成并处理过的 Markdown 文件位置。 */
+        resultMdPath.textContent =
+            result.md_path ||
+            "-";
+
+
+        /* 成功以后确保进度条最终一定显示 100%。 */
+        updateProgress(
+            100,
+            "导入完成",
+            "知识库导入完成"
+        );
+    }
+
+
+    /* ==================== 12.只要导入过程失败，就调用这个方法把红色错误提示显示出来 ==================== */
+
+    function showError(
+        message
+    ) {
+
+        /* 把错误区域显示出来。 */
+        errorBox.style.display =
+            "block";
+
+
+        /* 把真正的错误原因写进去。 */
+        errorBox.textContent =
+            "导入失败：" +
+            message;
+
+
+        /* 状态标题也同步改成导入失败。 */
+        statusTitle.textContent =
+            "导入失败";
+
+
+        /* 状态提示改成让用户查看下面错误。 */
+        statusMessage.textContent =
+            "任务执行过程中出现错误，请查看下面的错误信息";
+    }
+
+
+    /* ==================== 13.这个 sleep 方法就是让 JavaScript 原地等一会，比如这里专门拿来等 1.5 秒再查一次状态 ==================== */
+
+    function sleep(
+        milliseconds
+    ) {
+
+        /* Promise 可以理解成先定一个闹钟，时间到了以后再继续往下执行。 */
+        return new Promise(
+            function (resolve) {
+
+                setTimeout(
+                    resolve,
+                    milliseconds
+                );
+            }
+        );
+    }
+
+
+    /* ==================== 14.点击“重新选择”以后，把这一次选择和页面状态全部恢复到刚打开网页的时候 ==================== */
+
+    resetButton.addEventListener(
+        "click",
+        function () {
+
+            /* 把 JavaScript 记住的当前文件清掉。 */
+            selectedFile =
+                null;
+
+
+            /* 把真正文件选择框里面以前选过的文件也清掉。 */
+            fileInput.value =
+                "";
+
+
+            /* 没文件了，所以把文件信息区域隐藏。 */
+            fileInfo.style.display =
+                "none";
+
+
+            /* 没文件就不能上传，所以重新把“开始导入”按钮锁住。 */
+            uploadButton.disabled =
+                true;
+
+
+            /* 把进度状态区域隐藏。 */
+            statusBox.style.display =
+                "none";
+
+
+            /* 把上一次成功结果隐藏。 */
+            resultBox.style.display =
+                "none";
+
+
+            /* 把上一次错误提示隐藏。 */
+            errorBox.style.display =
+                "none";
+
+
+            /* 把进度条重新变成 0%。 */
+            progressBar.style.width =
+                "0%";
+
+
+            /* 把具体百分比数字也重新变成 0%。 */
+            progressText.textContent =
+                "0%";
+        }
+    );
+
+</script>
+
+
+</body>
+
+</html>

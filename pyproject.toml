@@ -1,0 +1,5 @@
+[project]
+name = "deeprag"
+version = "0.1.0"
+description = "把文档变成能检索、能追问的知识库"
+requires-python = ">=3.11"

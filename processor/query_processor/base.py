@@ -1,0 +1,25 @@
+from abc import ABC, abstractmethod
+from typing import TypeVar
+from tool.logger import logger
+T = TypeVar('T')
+class NodeBase(ABC):
+    name:str = "base_node"
+    def __call__(self,state:T)->T:
+        try:
+            logger.info(f"---节点 {self.name} 开始啦") #1.开始准备执行节点了
+            result = self.process(state) #2.执行节点
+            logger.info(f"---节点 {self.name} 完成啦") #3.执行节点成功
+            return result
+        except Exception as e:
+            logger.error(f"{self.name}执行失败{e}")
+            raise
+    @abstractmethod
+    def process(self, state:T)->T:
+        """
+        节点核心处理逻辑
+        子类必须实现此方法
+        :param state:工作流状态对象
+        :return:更新后的状态对象
+        """
+        pass
+
